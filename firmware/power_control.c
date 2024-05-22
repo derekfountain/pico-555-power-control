@@ -43,6 +43,11 @@
  *              -c "program ./program power_control.elf verify reset exit"
  */
 
+/*
+ * Onboard LED shows life, flickering as the 555 pokes the Pico.
+ * But it consumes power, so make it easy to turn off
+ */
+#define FLICKER_LED 1
 
 #include "pico/platform.h"
 #include "pico/stdlib.h"
@@ -54,15 +59,15 @@ const uint32_t GPIO_PULSE_INPUT = 15;
 
 void gpios_callback( uint gpio, uint32_t events ) 
 {
-    gpio_put(LED_PIN, 1);
-    busy_wait_us_32(1000);
-    gpio_put(LED_PIN, 0);
+  gpio_put(LED_PIN, FLICKER_LED);
+  busy_wait_us_32(1000);
+  gpio_put(LED_PIN, 0);
 }
 
 int main()
 {
   bi_decl(bi_program_description("Pico/555 Power Control Binary."));
-  sleep_ms( 1000 );
+  sleep_ms( 500 );
 
   gpio_init( GPIO_PULSE_INPUT );
   gpio_set_dir( GPIO_PULSE_INPUT, GPIO_IN );
