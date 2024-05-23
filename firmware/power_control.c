@@ -49,29 +49,51 @@
  */
 #define FLICKER_LED 1
 
+#include <stdio.h>
+
+#include "hardware/xosc.h"
+
 #include "pico/platform.h"
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 
+#include "pico/sleep.h"
+
 const uint LED_PIN = PICO_DEFAULT_LED_PIN;
 
-const uint32_t GPIO_PULSE_INPUT = 15;
+const uint32_t GPIO_PULSE_INPUT   = 15;
+const uint32_t GPIO_SCOPE_OUTPUT1 = 13;
+const uint32_t GPIO_SCOPE_OUTPUT2 = 14;
 
 void gpios_callback( uint gpio, uint32_t events ) 
 {
+  /* Scope output follows the LED - high when this routine is running */
+  gpio_put( GPIO_SCOPE_OUTPUT2, 1 );
+
   gpio_put(LED_PIN, FLICKER_LED);
   busy_wait_us_32(1000);
   gpio_put(LED_PIN, 0);
+
+  gpio_put( GPIO_SCOPE_OUTPUT2, 0 );
 }
 
 int main()
 {
   bi_decl(bi_program_description("Pico/555 Power Control Binary."));
+  stdio_init_all();
   sleep_ms( 500 );
 
   gpio_init( GPIO_PULSE_INPUT );
   gpio_set_dir( GPIO_PULSE_INPUT, GPIO_IN );
   gpio_pull_up( GPIO_PULSE_INPUT );
+
+  gpio_init( GPIO_SCOPE_OUTPUT1 );
+  gpio_set_dir( GPIO_SCOPE_OUTPUT1, GPIO_OUT );
+  gpio_put( GPIO_SCOPE_OUTPUT1, 1 );
+
+  gpio_init( GPIO_SCOPE_OUTPUT2 );
+  gpio_set_dir( GPIO_SCOPE_OUTPUT2, GPIO_OUT );
+  gpio_put( GPIO_SCOPE_OUTPUT2, 0 );
 
   gpio_init( LED_PIN );
   gpio_set_dir( LED_PIN, GPIO_OUT );
@@ -79,5 +101,16 @@ int main()
 
   gpio_set_irq_enabled_with_callback( GPIO_PULSE_INPUT, GPIO_IRQ_EDGE_FALL, true, &gpios_callback );
 
-  while(1);
+
+  while(1)
+  {
+    gpio_set_dormant_irq_enabled( GPIO_PULSE_INPUT, GPIO_IRQ_EDGE_FALL, true );
+
+    /* Scope output follows the Pico - low when Pico is dormant */
+    gpio_put( GPIO_SCOPE_OUTPUT1, 0 );
+    xosc_dormant();
+    gpio_put( GPIO_SCOPE_OUTPUT1, 1 );
+
+    gpio_acknowledge_irq( GPIO_PULSE_INPUT, GPIO_IRQ_EDGE_FALL );
+  }
 }

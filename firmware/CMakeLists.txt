@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 include(pico_sdk_import.cmake)
+include(pico_extras_import.cmake)
 
 project(power_control C CXX ASM)
 set(CMAKE_C_STANDARD 11)
@@ -14,9 +15,9 @@ if (TARGET tinyusb_device)
     power_control.c
   )
 
-  target_link_libraries(power_control pico_stdlib pico_mem_ops)
+  target_link_libraries(power_control pico_stdlib pico_mem_ops hardware_sleep hardware_rtc)
 
-  pico_enable_stdio_usb(power_control 0)
+  pico_enable_stdio_usb(power_control 1)
   pico_enable_stdio_uart(power_control 0)
 
   pico_add_extra_outputs(power_control)
