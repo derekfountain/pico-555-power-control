@@ -62,7 +62,7 @@ covered by errata.
 
 I've put it down to being a buggy part of the RP2040.
 
-## Wake From Dormant
+## Wake From Dormant 1
 
 Next experiment was to try sending the RP2040 dormant and waking
 it up from the external pulse delivered by the 555. The simplest
@@ -143,3 +143,41 @@ But note that wake up period. Going dormant saves power, but you lose
 time and consistency as the RP2040 wakes up rather erratically.
 
 See Github project tag of "Dormant 1".
+
+## Wake From Dormant 2
+
+The next iteration was to try to restore everything back to working
+order after the Pico comes back from dormancy. The previous example
+comes back, but the clocks are all screwed up so basic stuff like
+sleep_ms() doesn't work let alone things like USB.
+
+More digging around the internet led me to examples which use code
+from the sleep/hello_dormant example in the pico-playground project.
+That's got a routine in it which shuts down the PLLs and sends
+everything to sleep, and then shows how to recover and put it all back.
+It's a fussy affair, needing things done in just the right order. If
+you miss a trick it won't work. But the example here works for me.
+
+At least, it works to a point. There's a thread [here](https://github.com/raspberrypi/pico-extras/issues/41)
+from 2 years ago saying that the Pico doesn't always recover from the
+dormancy. That appears to be the case. My loop runs, the 555 wakes the
+Pico from dormancy 10 times a second, and everything is OK, until,
+minutes or maybe hours later, it suddenly hangs up. There's no apparent
+cause, and as of this writing no explanation or solution. There's
+a post on there about the IRQ pool being exhausted and how unclaiming
+one will prevent the problem. I tried it, and it just caused the Pico
+to hang.
+
+Also, the USB is typically messed up after the dormancy. There's no
+solution to that. Someone posted to that thread saying how removing
+the USB clock resetting from the clocks_init() function fixes it,
+but I tried that and although the Pico didn't hang, the USB didn't
+recover.
+
+So I think this is as far as I can go with this. Something's buggy,
+it's been reported, and it doesn't look like it's going to get
+fixed.
+
+The voltage across my sense resistor for this experiment was 1.1mV,
+giving a current of 0.85mA. That will be the benefit of turning off
+the PLLs while the RP2040 is dormant.
