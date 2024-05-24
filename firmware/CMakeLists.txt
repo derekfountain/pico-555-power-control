@@ -15,7 +15,7 @@ if (TARGET tinyusb_device)
     power_control.c
   )
 
-  target_link_libraries(power_control pico_stdlib pico_mem_ops hardware_sleep hardware_rtc)
+  target_link_libraries(power_control pico_stdlib pico_mem_ops hardware_sleep hardware_rtc hardware_pll)
 
   pico_enable_stdio_usb(power_control 1)
   pico_enable_stdio_uart(power_control 0)
